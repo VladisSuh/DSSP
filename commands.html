@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Command Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #555;
+            text-align: center;
+        }
+        .command-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        select, input, button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        select {
+            background-color: #f0f0f0;
+            flex: 2;
+        }
+        button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            flex: 1;
+        }
+        button:hover {
+            background-color: #d32f2f;
+        }
+        .additional-info {
+            display: none;
+            margin: 20px 0;
+        }
+        #info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 5px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Интерфейс взаимодействия с коллекциями данных</h1>
+    <div class="command-section">
+        <select id="commandSelect" onchange="showAdditionalFields()">
+            <option value="add-pool">Add pool</option>
+            <option value="remove-pool">Remove pool</option>
+            <option value="add-schema">Add schema</option>
+            <option value="remove-schema">Remove schema</option>
+            <option value="add-collection">Add collection</option>
+            <option value="remove-collection">Remove collection</option>
+            <option value="insert-data">Insert data</option>
+            <option value="update-data">Update data</option>
+            <option value="delete-data">Delete data</option>
+            <option value="execute">Execute</option>
+            <option value="save-state">Save</option>
+            <option value="exit">Exit</option>
+        </select>
+        <button onclick="sendCommand()">Отправить команду</button>
+    </div>
+    <div id="additionalFields" class="additional-info">
+    </div>
+    <p id="response"></p>
+    <div id="info">
+        <h2>Current Structures</h2>
+        <pre id="structureInfo"></pre>
+    </div>
+</div>
+
+<script>
+    function showAdditionalFields() {
+        const command = document.getElementById('commandSelect').value;
+        const additionalFieldsDiv = document.getElementById('additionalFields');
+        additionalFieldsDiv.innerHTML = '';
+
+        if (command === 'add-pool' || command === 'remove-pool') {
+            additionalFieldsDiv.innerHTML = `<input type="text" id="infoInput1" placeholder="Enter pool">`;
+        } else if (command === 'save-state') {
+            additionalFieldsDiv.innerHTML = `<input type="text" id="infoInput1" placeholder="Enter json-file">`;
+        } else if (command === 'add-schema' || command === 'remove-schema') {
+            additionalFieldsDiv.innerHTML = `
+                <input type="text" id="infoInput1" placeholder="Enter pool">
+                <input type="text" id="infoInput2" placeholder="Enter schema">
+            `;
+        } else if (command === 'add-collection' || command === 'remove-collection') {
+            additionalFieldsDiv.innerHTML = `
+                <input type="text" id="infoInput1" placeholder="Enter pool">
+                <input type="text" id="infoInput2" placeholder="Enter schema">
+                <input type="text" id="infoInput3" placeholder="Enter collection">
+                <input type="text" id="infoInput4" placeholder="Enter data">
+                ${command === 'add-collection' ? '<input type="text" id="infoInput4" placeholder="Enter tree type">' : ''}
+            `;
+        } else if (command === 'insert-data' || command === 'update-data' || command === 'delete-data') {
+            additionalFieldsDiv.innerHTML = `
+                <input type="text" id="infoInput1" placeholder="Enter pool">
+                <input type="text" id="infoInput2" placeholder="Enter schema">
+                <input type="text" id="infoInput3" placeholder="Enter collection">
+                <input type="text" id="infoInput4" placeholder="Enter key">
+                <input type="text" id="infoInput5" placeholder="Enter value">
+            `;
+        }
+
+        additionalFieldsDiv.style.display = 'block';
+    }
+
+    function sendCommand() {
+        const command = document.getElementById('commandSelect').value;
+        const additionalInfoInputs = document.querySelectorAll('.additional-info input');
+        let additionalInfo = '';
+        additionalInfoInputs.forEach(input => {
+            additionalInfo += input.value + ' ';
+        });
+
+        if (!command) {
+            document.getElementById('response').textContent = "Please select a command.";
+            return;
+        }
+
+        fetch(`/run-command?command=${encodeURIComponent(command + ' ' + additionalInfo.trim())}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').textContent = data.message;
+                updateStructureInfo();
+            })
+            .catch(error => {
+                document.getElementById('response').textContent = `Error: ${error}`;
+            });
+    }
+
+    function updateStructureInfo() {
+        fetch('/get-info')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('structureInfo').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('structureInfo').textContent = `Error: ${error}`;
+            });
+    }
+
+    window.onload = updateStructureInfo;
+</script>
+</body>
+</html>

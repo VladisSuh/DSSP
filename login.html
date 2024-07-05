@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authentication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .auth-container {
+            background-color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input, button, a {
+            width: 100%;
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: #f44336;
+            outline: none;
+        }
+        button, a.register {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover, a.register:hover {
+            background-color: #d32f2f;
+        }
+        a.register {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
+        p#response {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <h1>ДОБРО ПОЖАЛОВАТЬ!</h1>
+    <input type="text" id="username" placeholder="Имя пользователя">
+    <input type="password" id="password" placeholder="Пароль">
+    <button onclick="authenticate()">Войти</button>
+    <p id="response"></p>
+    <a href="/register" class="register">Регистрация</a>
+</div>
+
+<script>
+    function authenticate() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        if (!username || !password) {
+            document.getElementById('response').textContent = "Please enter username and password.";
+            return;
+        }
+
+        fetch(`/authenticate?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/commands';
+                } else {
+                    document.getElementById('response').textContent = "Invalid username or password.";
+                }
+            })
+            .catch(error => {
+                document.getElementById('response').textContent = `Error: ${error}`;
+            });
+    }
+</script>
+</body>
+</html>
